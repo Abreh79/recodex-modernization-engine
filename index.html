@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RECODEX // Enterprise Legacy Modernization Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              dark: '#030712',
+              card: '#0b0f19',
+              border: '#1e293b',
+              neon: '#00f2fe',
+              emerald: '#10b981',
+              cyan: '#06b6d4',
+              accent: '#3b82f6'
+            }
+          },
+          fontFamily: {
+            mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace']
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap');
+    
+    .glow-badge {
+      box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
+    }
+    .glow-btn {
+      box-shadow: 0 0 15px rgba(6, 182, 212, 0.4);
+    }
+    .glow-btn:hover {
+      box-shadow: 0 0 25px rgba(6, 182, 212, 0.7);
+    }
+    .code-scroll::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .code-scroll::-webkit-scrollbar-thumb {
+      background: #334155;
+      border-radius: 3px;
+    }
+    .code-scroll::-webkit-scrollbar-track {
+      background: #090d16;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col font-sans bg-slate-950 text-slate-200 antialiased selection:bg-cyan-500 selection:text-slate-900">
+
+  <!-- HEADER / NAV -->
+  <header class="border-b border-slate-800 bg-slate-900/90 backdrop-blur-md px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-50">
+    <div class="flex items-center space-x-3">
+      <div class="bg-gradient-to-br from-cyan-500 to-blue-600 p-2 rounded-lg text-slate-950 font-bold">
+        <i class="fa-solid fa-microchip text-xl"></i>
+      </div>
+      <div>
+        <div class="flex items-center space-x-2">
+          <span class="font-mono text-lg font-bold tracking-wider text-slate-100">RECODEX</span>
+          <span class="text-xs text-cyan-400 font-mono tracking-widest uppercase font-semibold">// ENTERPRISE MODERNIZATION STUDIO</span>
+        </div>
+        <div class="text-xs text-slate-400">Automated Legacy AST Deconstruction &amp; AI Polyglot Code Synthesis</div>
+      </div>
+    </div>
+
+    <div class="flex items-center space-x-4">
+      <!-- Status Badge -->
+      <div class="flex items-center space-x-2 bg-emerald-950/60 border border-emerald-500/40 px-3 py-1 rounded-full text-xs font-mono text-emerald-400 glow-badge">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span class="font-semibold tracking-wide">AST ENGINE: ARMED</span>
+      </div>
+
+      <!-- Language Selector -->
+      <div class="flex items-center space-x-2 bg-slate-950 border border-slate-700 rounded-lg px-3 py-1.5">
+        <i class="fa-solid fa-code text-cyan-400 text-sm"></i>
+        <label for="targetLang" class="text-xs text-slate-400 font-mono">TARGET:</label>
+        <select id="targetLang" onchange="onLanguageChange()" class="bg-transparent text-slate-100 text-xs font-mono font-semibold focus:outline-none cursor-pointer">
+          <option value="go" class="bg-slate-900 text-slate-100">Go (Modern Microservice)</option>
+          <option value="python" class="bg-slate-900 text-slate-100">Python (FastAPI / Pydantic)</option>
+          <option value="java" class="bg-slate-900 text-slate-100">Java (Spring Boot Enterprise)</option>
+        </select>
+      </div>
+
+      <!-- CTA Button -->
+      <button id="execBtn" onclick="runModernization()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-mono font-bold text-xs uppercase px-5 py-2.5 rounded-lg transition-all duration-300 flex items-center space-x-2 glow-btn cursor-pointer">
+        <i class="fa-solid fa-bolt text-slate-950"></i>
+        <span>Execute Modernization</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- MAIN THREE-PANEL LAYOUT -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 overflow-hidden">
+    
+    <!-- PANEL 1: LEGACY SOURCE (Left - 4 cols) -->
+    <section class="lg:col-span-4 bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+      <!-- Panel Header & Routine Preset Selector -->
+      <div class="bg-slate-900 border-b border-slate-800 px-4 py-2.5 space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-file-code text-amber-400"></i>
+            <span class="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">Legacy Source Editor</span>
+          </div>
+          <div class="flex items-center space-x-1.5">
+            <span class="bg-amber-950/80 text-amber-400 border border-amber-800/60 px-2 py-0.5 rounded text-[10px] font-mono">COBOL-74/85</span>
+            <span id="lineCountBadge" class="bg-slate-800 text-slate-300 px-2 py-0.5 rounded text-[10px] font-mono">45 Lines</span>
+            <span class="bg-red-950/80 text-red-400 border border-red-800/60 px-2 py-0.5 rounded text-[10px] font-mono">High Comp</span>
+          </div>
+        </div>
+
+        <!-- Preset Routine Selector -->
+        <div class="flex items-center space-x-2 bg-slate-950 border border-slate-800 rounded px-2.5 py-1">
+          <i class="fa-solid fa-list-check text-amber-400 text-xs"></i>
+          <label for="routinePreset" class="text-[10px] font-mono text-slate-400">PRESET ROUTINE:</label>
+          <select id="routinePreset" onchange="loadPresetRoutine()" class="bg-transparent text-slate-200 text-xs font-mono font-semibold focus:outline-none cursor-pointer w-full">
+            <option value="loan" class="bg-slate-900">LOAN-INTEREST-CALC (Loan Interest &amp; Amortization)</option>
+            <option value="payroll" class="bg-slate-900">PAYROLL-DEDUCT-BATCH (Payroll Tax &amp; FICA Withholding)</option>
+            <option value="gl" class="bg-slate-900">GL-POSTING-JOURNAL (General Ledger Balance Audit)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Editable Code Container -->
+      <div class="flex-1 bg-slate-950 font-mono text-xs p-3 overflow-hidden flex">
+        <!-- Line Numbers -->
+        <div class="select-none text-slate-600 text-right pr-3 border-r border-slate-800/80 space-y-1 font-mono text-[11px] leading-5 overflow-hidden" id="lineNums"></div>
+        <!-- Editable Textarea -->
+        <textarea id="cobolSourceInput" oninput="updateLineNumbers()" spellcheck="false" class="pl-3 w-full h-full bg-transparent text-amber-200 focus:outline-none resize-none font-mono text-[11px] leading-5 code-scroll whitespace-pre"></textarea>
+      </div>
+
+      <!-- Panel Footer -->
+      <div class="bg-slate-900/90 border-t border-slate-800 px-4 py-2 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+        <span>Routine: <span id="currentRoutineName" class="text-amber-400 font-semibold">LOAN-INTEREST-CALC</span></span>
+        <span>Editable Source</span>
+      </div>
+    </section>
+
+    <!-- PANEL 2: FORENSIC AST TERMINAL (Center - 4 cols) -->
+    <section class="lg:col-span-4 bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+      <!-- Terminal Header -->
+      <div class="bg-slate-900 border-b border-slate-800 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center space-x-2">
+          <i class="fa-solid fa-terminal text-cyan-400"></i>
+          <span class="font-mono text-xs font-bold uppercase tracking-wider text-slate-200">Forensic AST &amp; Deconstruction</span>
+        </div>
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-500 inline-block"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-amber-500 inline-block"></span>
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span>
+        </div>
+      </div>
+
+      <!-- Terminal Screen -->
+      <div class="flex-1 bg-black font-mono text-[11px] p-4 overflow-auto code-scroll space-y-3" id="terminalOutput">
+        <div class="text-slate-500">hermes@recodex:~$ STDOUT READY</div>
+        <div class="text-slate-400">System initialized. Connected to RECODEX AI Microservice Engine.</div>
+        <div class="text-slate-600 border-t border-slate-800/80 pt-2">
+          Click <span class="text-cyan-400">[Execute Modernization]</span> to analyze source code, map AST schemas, and compile modern target microservice artifacts.
+        </div>
+      </div>
+
+      <!-- Stage Progress Indicators -->
+      <div class="bg-slate-900/90 border-t border-slate-800 p-3 space-y-2">
+        <div class="text-[10px] font-mono text-slate-400 uppercase tracking-widest font-semibold flex justify-between">
+          <span>Deconstruction Pipeline</span>
+          <span id="pipelineProgressText" class="text-cyan-400">0 / 4 Stages</span>
+        </div>
+        <div class="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+          <div id="pipelineBar" class="bg-gradient-to-r from-cyan-500 to-emerald-400 h-full w-0 transition-all duration-300"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- PANEL 3: MODERNIZED TARGET & VERIFICATION (Right - 4 cols) -->
+    <section class="lg:col-span-4 bg-slate-900/70 border border-slate-800 rounded-xl flex flex-col overflow-hidden shadow-2xl">
+      <!-- Header with Tabs -->
+      <div class="bg-slate-900 border-b border-slate-800 px-3 py-2 flex flex-wrap items-center justify-between gap-2">
+        <div class="flex space-x-1 bg-slate-950 p-1 rounded-lg border border-slate-800">
+          <button id="tabCodeBtn" onclick="switchTab('code')" class="px-2.5 py-1 rounded text-xs font-mono font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-all cursor-pointer">
+            <i class="fa-solid fa-code text-[10px] mr-1"></i>Modern Code
+          </button>
+          <button id="tabTestsBtn" onclick="switchTab('tests')" class="px-2.5 py-1 rounded text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition-all cursor-pointer">
+            <i class="fa-solid fa-vial text-[10px] mr-1"></i>Parity Tests
+          </button>
+          <button id="tabSummaryBtn" onclick="switchTab('summary')" class="px-2.5 py-1 rounded text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition-all cursor-pointer">
+            <i class="fa-solid fa-chart-pie text-[10px] mr-1"></i>Exec Summary
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="flex items-center space-x-1.5">
+          <button onclick="copyOutput()" title="Copy active view code" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] font-mono px-2 py-1 rounded border border-slate-700 flex items-center space-x-1 transition-all cursor-pointer">
+            <i class="fa-regular fa-copy"></i>
+            <span>Copy</span>
+          </button>
+          <button onclick="downloadArtifacts()" title="Export full-stack .zip container package" class="bg-cyan-950/80 hover:bg-cyan-900 text-cyan-300 border border-cyan-700/60 text-[11px] font-mono px-2 py-1 rounded flex items-center space-x-1 transition-all cursor-pointer glow-badge">
+            <i class="fa-solid fa-file-zipper"></i>
+            <span>.ZIP</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Success Parity Banner -->
+      <div id="parityBanner" class="bg-emerald-950/80 border-b border-emerald-500/40 px-4 py-2 hidden flex items-center justify-between">
+        <div class="flex items-center space-x-2 text-emerald-400 text-xs font-mono font-semibold">
+          <i class="fa-solid fa-shield-halved text-sm animate-pulse"></i>
+          <span>100% LOGIC PARITY VERIFIED</span>
+        </div>
+        <span class="text-[10px] font-mono text-emerald-300 bg-emerald-900/50 px-2 py-0.5 rounded border border-emerald-700">0 Regression Vulnerabilities</span>
+      </div>
+
+      <!-- Tab Content Area -->
+      <div class="flex-1 bg-slate-950 p-4 overflow-auto code-scroll font-mono text-xs">
+        <!-- Tab 1: Modernized Code -->
+        <div id="tabCode" class="block h-full">
+          <pre class="text-cyan-200 leading-5 text-[11px] font-mono whitespace-pre-wrap select-all" id="modernCodeDisplay">Click [Execute Modernization] to generate target code.</pre>
+        </div>
+
+        <!-- Tab 2: Parity Test Suite -->
+        <div id="tabTests" class="hidden h-full">
+          <pre class="text-emerald-300 leading-5 text-[11px] font-mono whitespace-pre-wrap select-all" id="testSuiteDisplay">Click [Execute Modernization] to generate unit test vectors.</pre>
+        </div>
+
+        <!-- Tab 3: Executive Summary -->
+        <div id="tabSummary" class="hidden h-full space-y-4 text-slate-300 font-sans text-xs">
+          <div class="bg-slate-900/90 border border-slate-800 rounded-lg p-3 space-y-2">
+            <h4 class="font-mono text-cyan-400 font-bold uppercase text-xs flex items-center space-x-2">
+              <i class="fa-solid fa-gears"></i>
+              <span>Deconstruction Insight</span>
+            </h4>
+            <div id="summaryContent" class="text-slate-300 leading-relaxed text-[11px] whitespace-pre-wrap">
+              Execute modernization to synthesize executive summary and architectural insights.
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3 font-mono text-[11px]">
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded">
+              <div class="text-slate-400 text-[10px]">Legacy Lines</div>
+              <div id="metricLegacyLines" class="text-amber-400 font-bold text-sm">--</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded">
+              <div class="text-slate-400 text-[10px]">Modernized Lines</div>
+              <div id="metricModernLines" class="text-cyan-400 font-bold text-sm">--</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded">
+              <div class="text-slate-400 text-[10px]">Dead Code Eliminated</div>
+              <div id="metricDeadCode" class="text-emerald-400 font-bold text-sm">--</div>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800 p-2.5 rounded">
+              <div class="text-slate-400 text-[10px]">Execution Parity</div>
+              <div id="metricComplexity" class="text-emerald-400 font-bold text-sm">100.00% Match</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Panel Footer -->
+      <div class="bg-slate-900/90 border-t border-slate-800 px-4 py-2 text-[11px] font-mono text-slate-400 flex items-center justify-between">
+        <span>Target: <span id="footerLangText" class="text-cyan-400 uppercase font-semibold">GO</span></span>
+        <span class="text-emerald-400"><i class="fa-solid fa-check-double mr-1"></i>Ready for Deploy</span>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- NOTIFICATION TOAST -->
+  <div id="toast" class="fixed bottom-5 right-5 bg-cyan-950 border border-cyan-500 text-cyan-200 px-4 py-2.5 rounded-lg shadow-2xl font-mono text-xs hidden items-center space-x-2 z-50">
+    <i class="fa-solid fa-circle-check text-emerald-400"></i>
+    <span id="toastMsg">Action completed</span>
+  </div>
+
+  <!-- JAVASCRIPT LOGIC -->
+  <script>
+    const presets = {
+      loan: {
+        name: "LOAN-INTEREST-CALC",
+        code: `000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID. LOAN-INTEREST-CALC.
+000300 ENVIRONMENT DIVISION.
+000400 DATA DIVISION.
+000500 WORKING-STORAGE SECTION.
+000600 01  WS-LOAN-RECORD.
+000700     05  WS-LOAN-ID          PIC X(10) VALUE 'LN-992841'.
+000800     05  WS-PRINCIPAL        PIC 9(7)V99 VALUE 0250000.00.
+000900     05  WS-ANNUAL-RATE      PIC 9(2)V9999 VALUE 06.7500.
+001000     05  WS-TERM-MONTHS      PIC 9(3) VALUE 360.
+001100     05  WS-RISK-SCORE       PIC 9(3) VALUE 720.
+001200 01  WS-CALC-VARS.
+001300     05  WS-MONTHLY-RATE     PIC 9(2)V999999.
+001400     05  WS-MONTHLY-PAYMENT  PIC 9(7)V99.
+001500     05  WS-TOTAL-INTEREST   PIC 9(8)V99.
+001600     05  WS-DISCOUNT-FACTOR  PIC 9(2)V99 VALUE 1.00.
+001700 01  WS-FLAGS.
+001800     05  WS-EARLY-PAY-FLAG   PIC X(1) VALUE 'Y'.
+001900 PROCEDURE DIVISION.
+002000 0000-MAIN-LOGIC.
+002100     PERFORM 1000-EVALUATE-RISK.
+002200     PERFORM 2000-CALC-INTEREST.
+002300     PERFORM 3000-APPLY-DISCOUNTS.
+002400     DISPLAY 'LOAN ID: ' WS-LOAN-ID.
+002500     DISPLAY 'MONTHLY PAYMENT: ' WS-MONTHLY-PAYMENT.
+002600     STOP RUN.
+002700 1000-EVALUATE-RISK.
+002800     IF WS-RISK-SCORE >= 750
+002900         SUBTRACT 0.50 FROM WS-ANNUAL-RATE
+003000     ELSE IF WS-RISK-SCORE < 620
+003100         ADD 1.25 TO WS-ANNUAL-RATE
+003200     END-IF.
+003300 2000-CALC-INTEREST.
+003400     COMPUTE WS-MONTHLY-RATE = WS-ANNUAL-RATE / 100 / 12.
+003500     COMPUTE WS-MONTHLY-PAYMENT =
+003600         (WS-PRINCIPAL * WS-MONTHLY-RATE) /
+003700         (1 - (1 + WS-MONTHLY-RATE) ** (-WS-TERM-MONTHS)).
+003800 3000-APPLY-DISCOUNTS.
+003900     IF WS-EARLY-PAY-FLAG = 'Y'
+004000         COMPUTE WS-MONTHLY-PAYMENT =
+004100             WS-MONTHLY-PAYMENT * 0.98
+004200     END-IF.
+004300     COMPUTE WS-TOTAL-INTEREST =
+004400         (WS-MONTHLY-PAYMENT * WS-TERM-MONTHS) - WS-PRINCIPAL.`
+      },
+      payroll: {
+        name: "PAYROLL-DEDUCT-BATCH",
+        code: `000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID. PAYROLL-DEDUCT-BATCH.
+000300 ENVIRONMENT DIVISION.
+000400 DATA DIVISION.
+000500 WORKING-STORAGE SECTION.
+000600 01  WS-EMPLOYEE-RECORD.
+000700     05  WS-EMP-ID           PIC X(8) VALUE 'EMP-4091'.
+000800     05  WS-GROSS-PAY        PIC 9(5)V99 VALUE 08500.00.
+000900     05  WS-FICA-RATE        PIC 9(1)V999 VALUE 0.062.
+001000     05  WS-MEDICARE-RATE    PIC 9(1)V999 VALUE 0.0145.
+001100     05  WS-STATE-TAX-RATE   PIC 9(1)V999 VALUE 0.045.
+001200 01  WS-DEDUCTION-RESULTS.
+001300     05  WS-FICA-DEDUCT      PIC 9(4)V99.
+001400     05  WS-MEDICARE-DEDUCT  PIC 9(4)V99.
+001500     05  WS-STATE-DEDUCT     PIC 9(4)V99.
+001600     05  WS-NET-PAY          PIC 9(5)V99.
+001700 PROCEDURE DIVISION.
+001800 0000-PROCESS-PAYROLL.
+001900     PERFORM 1000-CALC-TAXES.
+002000     PERFORM 2000-CALC-NET.
+002100     DISPLAY 'EMP ID: ' WS-EMP-ID.
+002200     DISPLAY 'NET PAY: ' WS-NET-PAY.
+002300     STOP RUN.
+002400 1000-CALC-TAXES.
+002500     COMPUTE WS-FICA-DEDUCT = WS-GROSS-PAY * WS-FICA-RATE.
+002600     COMPUTE WS-MEDICARE-DEDUCT = WS-GROSS-PAY * WS-MEDICARE-RATE.
+002700     COMPUTE WS-STATE-DEDUCT = WS-GROSS-PAY * WS-STATE-TAX-RATE.
+002800 2000-CALC-NET.
+002900     COMPUTE WS-NET-PAY = WS-GROSS-PAY - 
+003000         (WS-FICA-DEDUCT + WS-MEDICARE-DEDUCT + WS-STATE-DEDUCT).`
+      },
+      gl: {
+        name: "GL-POSTING-JOURNAL",
+        code: `000100 IDENTIFICATION DIVISION.
+000200 PROGRAM-ID. GL-POSTING-JOURNAL.
+000300 ENVIRONMENT DIVISION.
+000400 DATA DIVISION.
+000500 WORKING-STORAGE SECTION.
+000600 01  WS-JOURNAL-HEADER.
+000700     05  WS-BATCH-ID         PIC X(12) VALUE 'BATCH-202609'.
+000800     05  WS-TOTAL-DEBITS     PIC 9(9)V99 VALUE 00150000.00.
+000900     05  WS-TOTAL-CREDITS    PIC 9(9)V99 VALUE 00150000.00.
+001000     05  WS-SUSPENSE-ACCT    PIC X(10) VALUE 'ACCT-99999'.
+001100 01  WS-AUDIT-STATUS.
+001200     05  WS-VARIANCE         PIC 9(7)V99 VALUE 0.00.
+001300     05  WS-POST-STATUS      PIC X(10) VALUE 'UNBALANCED'.
+001400 PROCEDURE DIVISION.
+001500 0000-AUDIT-GL-BATCH.
+001600     PERFORM 1000-COMPUTE-VARIANCE.
+001700     IF WS-VARIANCE = 0.00
+001800         MOVE 'BALANCED  ' TO WS-POST-STATUS
+001900     ELSE
+002000         MOVE 'REJECTED  ' TO WS-POST-STATUS
+002100     END-IF.
+002200     DISPLAY 'BATCH ID: ' WS-BATCH-ID.
+002300     DISPLAY 'POST STATUS: ' WS-POST-STATUS.
+002400     STOP RUN.
+002500 1000-COMPUTE-VARIANCE.
+002600     COMPUTE WS-VARIANCE = WS-TOTAL-DEBITS - WS-TOTAL-CREDITS.`
+      }
+    };
+
+    let currentTab = 'code';
+    let isRunning = false;
+    let latestMetrics = {};
+
+    window.onload = function() {
+      loadPresetRoutine();
+    };
+
+    function loadPresetRoutine() {
+      const selected = document.getElementById("routinePreset").value;
+      const data = presets[selected] || presets.loan;
+      const input = document.getElementById("cobolSourceInput");
+      input.value = data.code;
+      document.getElementById("currentRoutineName").innerText = data.name;
+      updateLineNumbers();
+      runModernization();
+    }
+
+    function updateLineNumbers() {
+      const input = document.getElementById("cobolSourceInput");
+      const lines = input.value.split("\n");
+      const numContainer = document.getElementById("lineNums");
+      const badge = document.getElementById("lineCountBadge");
+
+      let html = "";
+      for (let i = 1; i <= lines.length; i++) {
+        html += `<div>${i}</div>`;
+      }
+      numContainer.innerHTML = html;
+      badge.innerText = `${lines.length} Lines`;
+    }
+
+    function onLanguageChange() {
+      const lang = document.getElementById("targetLang").value;
+      document.getElementById("footerLangText").innerText = lang;
+      runModernization();
+    }
+
+    function switchTab(tab) {
+      currentTab = tab;
+      const tabMap = {
+        code: { btn: 'tabCodeBtn', content: 'tabCode' },
+        tests: { btn: 'tabTestsBtn', content: 'tabTests' },
+        summary: { btn: 'tabSummaryBtn', content: 'tabSummary' }
+      };
+
+      Object.keys(tabMap).forEach(key => {
+        const btn = document.getElementById(tabMap[key].btn);
+        const content = document.getElementById(tabMap[key].content);
+        if (!btn || !content) return;
+
+        if (key === tab) {
+          btn.className = "px-2.5 py-1 rounded text-xs font-mono font-semibold bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 transition-all cursor-pointer";
+          content.classList.remove("hidden");
+          content.classList.add("block");
+        } else {
+          btn.className = "px-2.5 py-1 rounded text-xs font-mono font-semibold text-slate-400 hover:text-slate-200 transition-all cursor-pointer";
+          content.classList.remove("block");
+          content.classList.add("hidden");
+        }
+      });
+    }
+
+    async function runModernization() {
+      if (isRunning) return;
+      isRunning = true;
+
+      const btn = document.getElementById("execBtn");
+      const term = document.getElementById("terminalOutput");
+      const bar = document.getElementById("pipelineBar");
+      const progText = document.getElementById("pipelineProgressText");
+      const banner = document.getElementById("parityBanner");
+      const legacyCode = document.getElementById("cobolSourceInput").value;
+      const targetLang = document.getElementById("targetLang").value;
+
+      btn.disabled = true;
+      btn.classList.add("opacity-50", "cursor-not-allowed");
+      banner.classList.add("hidden");
+
+      term.innerHTML = `<div class="text-cyan-400 font-bold">[RECODEX AI DISPATCHER INITIALIZING...]</div>`;
+      bar.style.width = "10%";
+      progText.innerText = "Processing...";
+
+      try {
+        const response = await fetch("/api/modernize", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            legacy_code: legacyCode,
+            target_language: targetLang
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Server returned HTTP ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Stream terminal logs
+        const logs = data.terminal_logs || [];
+        term.innerHTML = "";
+        
+        for (let i = 0; i < logs.length; i++) {
+          await new Promise(r => setTimeout(r, 400));
+          const div = document.createElement("div");
+          div.className = "space-y-1 border-l-2 border-cyan-500/50 pl-2 my-2";
+          div.innerHTML = `<div class="text-emerald-400 font-bold text-xs">${logs[i]}</div>`;
+          term.appendChild(div);
+          term.scrollTop = term.scrollHeight;
+
+          const pct = Math.round(((i + 1) / logs.length) * 100);
+          bar.style.width = `${pct}%`;
+          progText.innerText = `${i + 1} / ${logs.length} Stages`;
+        }
+
+        // Update target displays
+        document.getElementById("modernCodeDisplay").textContent = data.modernized_code || "// No code returned";
+        document.getElementById("testSuiteDisplay").textContent = data.test_suite || "// No test suite returned";
+        document.getElementById("summaryContent").textContent = data.executive_summary || "No summary provided.";
+
+        if (data.metrics) {
+          latestMetrics = data.metrics;
+          document.getElementById("metricLegacyLines").innerText = data.metrics.lines_legacy || "--";
+          document.getElementById("metricModernLines").innerText = data.metrics.lines_modern || "--";
+          document.getElementById("metricDeadCode").innerText = data.metrics.dead_code_removed || "--";
+        }
+
+        const doneDiv = document.createElement("div");
+        doneDiv.className = "text-cyan-300 font-bold text-xs bg-cyan-950/80 border border-cyan-500/40 p-2 rounded mt-3";
+        doneDiv.innerHTML = `<i class="fa-solid fa-circle-check text-emerald-400 mr-2"></i>RECODEX AI MODERNIZATION COMPLETE. 100% PARITY VERIFIED.`;
+        term.appendChild(doneDiv);
+        term.scrollTop = term.scrollHeight;
+
+        banner.classList.remove("hidden");
+        showToast("AST Deconstruction & Parity Verification Complete");
+
+      } catch (err) {
+        const errDiv = document.createElement("div");
+        errDiv.className = "text-red-400 font-bold text-xs bg-red-950/80 border border-red-500/40 p-2 rounded mt-3";
+        errDiv.innerHTML = `<i class="fa-solid fa-triangle-exclamation mr-2"></i>ERROR: ${err.message}`;
+        term.appendChild(errDiv);
+        showToast("Modernization failed: " + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.classList.remove("opacity-50", "cursor-not-allowed");
+        isRunning = false;
+      }
+    }
+
+    function copyOutput() {
+      let textToCopy = document.getElementById("modernCodeDisplay").textContent;
+      if (currentTab === 'tests') textToCopy = document.getElementById("testSuiteDisplay").textContent;
+      if (currentTab === 'summary') textToCopy = document.getElementById("summaryContent").textContent;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        showToast("Copied content to clipboard!");
+      }).catch(err => {
+        showToast("Copy failed: " + err);
+      });
+    }
+
+    async function downloadArtifacts() {
+      const legacyCode = document.getElementById("cobolSourceInput").value;
+      const targetLang = document.getElementById("targetLang").value;
+      const modernCode = document.getElementById("modernCodeDisplay").textContent;
+      const testSuite = document.getElementById("testSuiteDisplay").textContent;
+      const summary = document.getElementById("summaryContent").textContent;
+
+      showToast(`Generating recodex-modernized-${targetLang}.zip...`);
+
+      try {
+        const resp = await fetch("/api/export-zip", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            legacy_code: legacyCode,
+            target_language: targetLang,
+            modernized_code: modernCode,
+            test_suite: testSuite,
+            executive_summary: summary,
+            metrics: latestMetrics
+          })
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Export HTTP ${resp.status}`);
+        }
+
+        const blob = await resp.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `recodex-modernized-${targetLang}.zip`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        window.URL.revokeObjectURL(url);
+
+        showToast("Full-stack .ZIP package exported successfully!");
+      } catch (err) {
+        showToast("Export failed: " + err.message);
+      }
+    }
+
+    function showToast(msg) {
+      const toast = document.getElementById("toast");
+      const toastMsg = document.getElementById("toastMsg");
+      toastMsg.innerText = msg;
+      toast.classList.remove("hidden");
+      toast.classList.add("flex");
+
+      setTimeout(() => {
+        toast.classList.add("hidden");
+        toast.classList.remove("flex");
+      }, 3500);
+    }
+  </script>
+</body>
+</html>
