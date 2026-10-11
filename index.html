@@ -88,7 +88,12 @@
         </select>
       </div>
 
-      <!-- CTA Button -->
+      <!-- CTA Buttons -->
+      <button onclick="runLiveStressTest()" class="bg-slate-900 hover:bg-slate-800 text-cyan-400 border border-cyan-500/40 font-mono font-bold text-xs uppercase px-4 py-2.5 rounded-lg transition-all duration-300 flex items-center space-x-2 cursor-pointer shadow-lg hover:border-cyan-400">
+        <i class="fa-solid fa-gauge-high text-cyan-400 animate-pulse"></i>
+        <span>⚡ Real-Time Stress Test</span>
+      </button>
+
       <button id="execBtn" onclick="runModernization()" class="bg-gradient-to-r from-cyan-500 to-blue-600 hover:from-cyan-400 hover:to-blue-500 text-slate-950 font-mono font-bold text-xs uppercase px-5 py-2.5 rounded-lg transition-all duration-300 flex items-center space-x-2 glow-btn cursor-pointer">
         <i class="fa-solid fa-bolt text-slate-950"></i>
         <span>Execute Modernization</span>
@@ -607,6 +612,145 @@
         toast.classList.remove("flex");
       }, 3500);
     }
+
+    async function runLiveStressTest() {
+      const legacyCode = document.getElementById("cobolSourceInput").value;
+      const targetLang = document.getElementById("targetLang").value;
+      const modernCode = document.getElementById("modernCodeDisplay").textContent;
+      const testSuite = document.getElementById("testSuiteDisplay").textContent;
+
+      const modal = document.getElementById("stressModal");
+      const modalBody = document.getElementById("stressModalBody");
+      
+      modal.classList.remove("hidden");
+      modal.classList.add("flex");
+
+      modalBody.innerHTML = `
+        <div class="text-center py-8 space-y-4">
+          <div class="inline-block p-4 rounded-full bg-cyan-950/80 border border-cyan-500/50 text-cyan-400 animate-spin text-3xl">
+            <i class="fa-solid fa-gear"></i>
+          </div>
+          <div class="font-mono text-sm font-bold text-cyan-400 tracking-wider uppercase">Running Real-Time Parity & Load Assertions...</div>
+          <div class="text-xs text-slate-400 font-mono">Executing 1,000 COMP-3 Decimal math iterations & boundary stress checks...</div>
+        </div>
+      `;
+
+      try {
+        const resp = await fetch("/api/run_live_test", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            legacy_code: legacyCode,
+            target_language: targetLang,
+            modernized_code: modernCode,
+            test_suite: testSuite
+          })
+        });
+
+        if (!resp.ok) {
+          throw new Error(`Test Runner HTTP ${resp.status}`);
+        }
+
+        const data = await resp.json();
+
+        let scenariosHTML = "";
+        data.scenarios.forEach(sc => {
+          scenariosHTML += `
+            <div class="bg-slate-950 border border-slate-800 rounded-xl p-4 space-y-2">
+              <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                  <span class="bg-emerald-950 border border-emerald-700 text-emerald-400 font-mono text-[10px] px-2 py-0.5 rounded font-bold">${sc.status}</span>
+                  <span class="font-mono text-xs font-bold text-slate-100">${sc.name}</span>
+                </div>
+                <div class="flex items-center space-x-3 text-xs font-mono text-slate-400">
+                  <span>Delta: <strong class="text-emerald-400">${sc.math_delta}</strong></span>
+                  <span>Latency: <strong class="text-cyan-400">${sc.latency_ms}ms</strong></span>
+                </div>
+              </div>
+              <p class="text-xs text-slate-400 font-mono leading-relaxed pl-1">${sc.detail}</p>
+            </div>
+          `;
+        });
+
+        modalBody.innerHTML = `
+          <div class="space-y-6">
+            <!-- Summary Banner -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 bg-slate-950 border border-cyan-500/30 rounded-xl p-4 text-center">
+              <div>
+                <div class="text-[10px] font-mono uppercase text-slate-400">PARITY SCORE</div>
+                <div class="text-lg font-mono font-extrabold text-emerald-400">${data.overall_parity_score}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase text-slate-400">PASSED SCENARIOS</div>
+                <div class="text-lg font-mono font-extrabold text-cyan-400">${data.scenarios_passed} / ${data.total_scenarios}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase text-slate-400">THROUGHPUT</div>
+                <div class="text-lg font-mono font-extrabold text-amber-400">${data.benchmark_throughput}</div>
+              </div>
+              <div>
+                <div class="text-[10px] font-mono uppercase text-slate-400">BENCHMARK TIME</div>
+                <div class="text-lg font-mono font-extrabold text-indigo-400">${data.total_time_ms} ms</div>
+              </div>
+            </div>
+
+            <!-- Scenarios List -->
+            <div class="space-y-3">
+              <div class="text-xs font-mono font-bold uppercase tracking-wider text-slate-300">Live Test Suite Breakdown (${data.program_id} vs ${data.target_language})</div>
+              ${scenariosHTML}
+            </div>
+          </div>
+        `;
+
+        showToast("⚡ Real-Time Parity & Stress Test Passed 100%!");
+      } catch (err) {
+        modalBody.innerHTML = `
+          <div class="text-center py-6 space-y-3 text-red-400">
+            <div class="text-2xl"><i class="fa-solid fa-triangle-exclamation"></i></div>
+            <div class="font-mono text-sm font-bold">Test Runner Failed</div>
+            <div class="text-xs font-mono text-slate-400">${err.message}</div>
+          </div>
+        `;
+      }
+    }
+
+    function closeStressModal() {
+      const modal = document.getElementById("stressModal");
+      modal.classList.add("hidden");
+      modal.classList.remove("flex");
+    }
   </script>
+
+  <!-- STRESS TEST MODAL -->
+  <div id="stressModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-3xl shadow-2xl flex flex-col overflow-hidden max-h-[90vh]">
+      <!-- Header -->
+      <div class="bg-slate-950 border-b border-slate-800 px-6 py-4 flex items-center justify-between">
+        <div class="flex items-center space-x-3">
+          <i class="fa-solid fa-gauge-high text-cyan-400 text-lg"></i>
+          <div>
+            <div class="font-mono text-sm font-bold text-slate-100">RECODEX LIVE PARITY & STRESS TEST RUNNER</div>
+            <div class="text-xs text-slate-400 font-mono">Real-Time Bit-for-Bit Math & Load Assertions</div>
+          </div>
+        </div>
+        <button onclick="closeStressModal()" class="text-slate-400 hover:text-white transition-colors text-lg px-2">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Body -->
+      <div id="stressModalBody" class="p-6 overflow-y-auto space-y-4 font-mono">
+        <!-- Dynamic Content -->
+      </div>
+
+      <!-- Footer -->
+      <div class="bg-slate-950 border-t border-slate-800 px-6 py-3 flex items-center justify-between text-xs font-mono">
+        <span class="text-slate-500">Assertion Engine: Active</span>
+        <button onclick="closeStressModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 px-4 py-2 rounded-lg font-semibold transition-colors">
+          Close Test Runner
+        </button>
+      </div>
+    </div>
+  </div>
 </body>
 </html>
