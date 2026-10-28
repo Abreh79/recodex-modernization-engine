@@ -2,3 +2,6 @@ __pycache__/
 *.pyc
 *.zip
 .DS_Store
+
+app.log
+*.bak
